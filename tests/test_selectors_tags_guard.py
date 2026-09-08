@@ -2,10 +2,20 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from gitundo import core
 from gitundo.core import GitUndoError
+
+# The autowrap guard is a POSIX shell feature; these two tests exercise the
+# generated bash block directly, so they only run where bash/POSIX semantics
+# exist (Linux, macOS). Windows CI runs all other tests.
+_skip_if_no_posix_shell = pytest.mark.skipif(
+    os.name == "nt",
+    reason="auto-guard is a POSIX shell feature",
+)
 
 
 def _mkrepo(repo, n: int = 3):
@@ -181,6 +191,7 @@ def test_guard_blank_and_comments():
 # --------------------------------------------------------------------------- #
 
 
+@_skip_if_no_posix_shell
 def test_autowrap_install_uninstall_roundtrip(repo, tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     home = tmp_path / "home"
@@ -204,6 +215,7 @@ def test_autowrap_install_uninstall_roundtrip(repo, tmp_path, monkeypatch):
     assert core.GUARD_MARKER not in rc.read_text()
 
 
+@_skip_if_no_posix_shell
 def test_autowrap_block_is_valid_bash(repo, tmp_path):
     block = core.autowrap_block("bash")
     script = tmp_path / "check.sh"
