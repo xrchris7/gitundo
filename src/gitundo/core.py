@@ -263,7 +263,12 @@ def find_checkpoint(
     repo: Path, selector: Optional[str], cps: Optional[list[Checkpoint]] = None
 ) -> Optional[Checkpoint]:
     """Resolve a selector: ``latest`` (default), an int ``N`` = "N snapshots
-    ago" (0 = latest), a tag name, or an object-id prefix."""
+    ago" (0 = latest), a tag name, or an object-id prefix.
+
+    Numeric selectors only mean "N snapshots ago" when N is within range; an
+    out-of-range integer (e.g. an all-digit object-id prefix) falls through to
+    tag / id-prefix matching.
+    """
     cps = read_checkpoints(repo) if cps is None else cps
     if not cps:
         return None
@@ -271,10 +276,8 @@ def find_checkpoint(
     if sel in ("latest", "last", "head", "@", "0"):
         return cps[-1]
     n = _to_int(sel)
-    if n is not None:
-        if 0 < n <= len(cps):
-            return cps[-(n + 1)]
-        return None
+    if n is not None and 0 < n <= len(cps):
+        return cps[-(n + 1)]
     for c in reversed(cps):
         if c.tag and c.tag.lower() == sel:
             return c

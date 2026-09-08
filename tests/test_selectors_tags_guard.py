@@ -47,6 +47,33 @@ def test_selector_by_oid_prefix_and_tag(repo):
     assert core.find_checkpoint(repo.path, "golden").tag == "golden"
 
 
+def test_selector_by_numeric_oid_prefix_falls_through(repo, monkeypatch):
+    """A numeric-looking selector that is out of range must still match as an
+    object-id prefix (restoring by an all-digit commit hash). Regression for
+    the case where ``<7-digit-all-number-hash>`` was parsed as "6,201,849
+    snapshots ago" and wrongly returned None."""
+    _mkrepo(repo, 3)
+
+    def fake_cps(_repo):
+        from gitundo.core import Checkpoint
+
+        return [
+            Checkpoint(oid="1111111a", subject="one", body="one",
+                       author_name="g", author_email="e", commit_time=1),
+            Checkpoint(oid="2222222b", subject="two", body="two",
+                       author_name="g", author_email="e", commit_time=2),
+            Checkpoint(oid="3333333c", subject="three", body="three",
+                       author_name="g", author_email="e", commit_time=3),
+        ]
+
+    monkeypatch.setattr(core, "read_checkpoints", fake_cps)
+    # "2222222" reads as a huge integer → must still resolve by id prefix
+    cp = core.find_checkpoint(repo.path, "2222222")
+    assert cp is not None and cp.oid == "2222222b"
+    # sanity: genuinely out-of-range numbers without a match return None
+    assert core.find_checkpoint(repo.path, "999999999") is None
+
+
 def test_tag_validation(repo):
     _mkrepo(repo, 1)
     with pytest.raises(GitUndoError):
