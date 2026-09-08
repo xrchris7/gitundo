@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gitundo — The undo button git never had</title>
+<meta name="description" content="Automatic safety-net snapshots for any git repository. Never lose work to reset --hard, clean -fdx, a bad rebase or an accidental delete again.">
+<meta property="og:title" content="gitundo — The undo button git never had">
+<meta property="og:description" content="Zero-dependency safety-net snapshots for any git repository. Undo the un-undoable.">
+<meta property="og:image" content="https://raw.githubusercontent.com/<owner>/gitundo/main/assets/social-preview.png">
+<style>
+  :root{
+    --bg:#070b14; --bg2:#0b1220; --card:#0e1626; --card2:#111c31;
+    --line:#1c2a45; --teal:#2dd4bf; --blue:#5b8cff; --text:#e6edf7;
+    --muted:#93a4bd; --ok:#34d399; --warn:#fbbf24; --danger:#f87171;
+    --radius:16px; --shadow:0 18px 50px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:radial-gradient(1200px 700px at 80% -10%, #12203f 0%, var(--bg) 55%), var(--bg);
+    color:var(--text); font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal); text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px}
+  ::selection{background:rgba(45,212,191,.25)}
+
+  nav{position:sticky; top:0; z-index:50; backdrop-filter:blur(10px);
+      background:rgba(7,11,20,.82); border-bottom:1px solid var(--line)}
+  .nav{display:flex; align-items:center; justify-content:space-between; height:62px}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; color:var(--text)}
+  .brand svg{width:26px; height:26px}
+  .nav a.btn{font-size:14px; padding:8px 16px; border-radius:10px;
+             background:linear-gradient(135deg,var(--teal),#22d3ee 60%,var(--blue));
+             color:#03151a; font-weight:700}
+  .nav a.btn:hover{filter:brightness(1.1); text-decoration:none}
+  .navlinks{display:flex; gap:22px; font-size:14px; color:var(--muted)}
+  .navlinks a{color:var(--muted)}
+  .navlinks a:hover{color:var(--text); text-decoration:none}
+
+  header{padding:84px 0 20px; text-align:center}
+  .badge{display:inline-flex; gap:8px; align-items:center; font-size:13px; font-weight:600;
+         color:var(--teal); border:1px solid rgba(45,212,191,.35); background:rgba(45,212,191,.08);
+         padding:6px 14px; border-radius:999px; margin-bottom:26px}
+  h1{font-size:clamp(44px,7vw,84px); line-height:1.05; letter-spacing:-.02em; font-weight:800}
+  h1 .grad{background:linear-gradient(90deg,#2dd4bf,#60a5fa); -webkit-background-clip:text;
+           background-clip:text; color:transparent}
+  .tag{font-size:clamp(18px,2.4vw,23px); color:var(--muted); max-width:760px; margin:22px auto 0}
+  .tag b{color:var(--text)}
+  .tag code{color:var(--danger)}
+  .cta{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:36px 0 6px}
+  .btn{display:inline-flex; align-items:center; gap:9px; padding:13px 24px; border-radius:12px;
+       font-weight:700; font-size:15px; text-decoration:none}
+  .btn.pri{background:linear-gradient(135deg,var(--teal),#22d3ee 55%,var(--blue)); color:#03151a;
+           box-shadow:0 10px 30px rgba(45,212,191,.25)}
+  .btn.sec{background:var(--card); color:var(--text); border:1px solid var(--line)}
+  .btn:hover{filter:brightness(1.08); text-decoration:none}
+  .pip{margin:34px auto 0; max-width:680px; display:flex; align-items:center; gap:12px;
+       background:var(--bg2); border:1px solid var(--line); border-radius:14px; padding:12px 8px 12px 20px}
+  .pip code{flex:1; text-align:left; font-size:15px; color:var(--teal); overflow-x:auto; white-space:nowrap}
+  .copy{background:var(--card2); border:1px solid var(--line); color:var(--muted); font-size:13px;
+        padding:8px 14px; border-radius:9px; cursor:pointer; font-family:inherit}
+  .copy:hover{color:var(--text); border-color:var(--teal)}
+
+  .term{max-width:860px; margin:60px auto 0; text-align:left; background:#05080f;
+        border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+  .termbar{display:flex; align-items:center; gap:8px; padding:12px 16px; background:#0a101d;
+           border-bottom:1px solid var(--line)}
+  .dot{width:12px; height:12px; border-radius:50%}
+  .termbar span.name{margin-left:8px; color:var(--muted); font-size:12.5px; font-family:ui-monospace,monospace}
+  .termbody{padding:18px 22px 26px; font:13.5px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace;
+           min-height:300px; color:#c7d4e6; overflow:hidden}
+  .termbody div{white-space:pre-wrap; word-break:break-word}
+  .c{color:var(--teal)} .g{color:var(--ok)} .w{color:var(--warn)} .d{color:#5c6c84} .e{color:var(--danger)}
+  .cur{display:inline-block; width:8px; height:14px; background:var(--teal); vertical-align:-2px;
+       animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  section{padding:72px 0 16px}
+  h2{font-size:clamp(28px,4vw,40px); font-weight:800; letter-spacing:-.01em; margin-bottom:12px}
+  .sec-sub{color:var(--muted); max-width:680px; margin-bottom:38px; font-size:17px}
+  .sec-sub code{color:var(--teal)}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px}
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2)); border:1px solid var(--line);
+        border-radius:var(--radius); padding:24px; transition:.18s transform,.18s border-color}
+  .card:hover{transform:translateY(-3px); border-color:rgba(45,212,191,.45)}
+  .card .ic{width:44px; height:44px; border-radius:12px; display:grid; place-items:center;
+            background:rgba(45,212,191,.12); margin-bottom:14px}
+  .card h3{font-size:17px; margin-bottom:8px}
+  .card p{color:var(--muted); font-size:14.5px}
+  .card code{color:var(--teal); font-size:13px}
+  .card code.dng{color:var(--danger)}
+
+  .steps{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; counter-reset:st}
+  .step{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+        padding:22px; position:relative}
+  .step::before{counter-increment:st; content:counter(st); width:30px; height:30px; display:grid;
+        place-items:center; border-radius:50%; background:linear-gradient(135deg,var(--teal),var(--blue));
+        color:#03151a; font-weight:800; margin-bottom:12px}
+  .step h3{font-size:16px; margin-bottom:6px}
+  .step p{color:var(--muted); font-size:14px}
+  .step code{color:var(--teal); font-size:13px}
+
+  .tablewrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius)}
+  table{width:100%; border-collapse:collapse; background:var(--bg2); min-width:660px}
+  th,td{text-align:left; padding:13px 18px; border-bottom:1px solid var(--line); font-size:14.5px}
+  th{color:var(--muted); font-weight:600; background:var(--card)}
+  tr:last-child td{border-bottom:none}
+  td code{color:var(--teal); font-size:13.5px; white-space:nowrap}
+  tr:hover td{background:var(--card)}
+
+  .vsc{display:grid; grid-template-columns:auto 1fr; gap:24px; align-items:center;
+       background:linear-gradient(120deg,#0d1f3c,#0b1526); border:1px solid var(--line);
+       border-radius:var(--radius); padding:28px; margin-top:6px}
+  .vsc .logo{width:88px; height:88px; border-radius:18px; display:grid; place-items:center;
+             background:var(--bg2); border:1px solid var(--line)}
+  .vsc h3{font-size:20px; margin-bottom:6px}
+  .vsc p{color:var(--muted); font-size:14.5px; margin-bottom:12px}
+  .pill{display:inline-block; margin-right:8px; padding:3px 10px; border-radius:999px;
+        background:rgba(45,212,191,.1); color:var(--teal); border:1px solid rgba(45,212,191,.3);
+        font-size:12.5px; font-weight:600}
+
+  footer{border-top:1px solid var(--line); margin-top:76px; padding:34px 0; color:var(--muted);
+         font-size:13.5px; text-align:center}
+  footer .hl{color:var(--teal)}
+  footer a{color:var(--muted); text-decoration:underline}
+  @media(max-width:720px){ .navlinks{display:none} .vsc{grid-template-columns:1fr; text-align:center}
+                           .vsc .logo{margin:0 auto} .vsc .pill{display:block; margin:8px auto 0; width:max-content} }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav">
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9.5 6.2 A7 7 0 1 1 5.6 17.2" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round"/><path d="M3.2 6.6 L3.2 12.2 L8.4 9.4 Z" fill="#2dd4bf"/><path d="M13.5 13.6 L15.6 15.8 L20.4 9.4" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      gitundo
+    </a>
+    <div class="navlinks">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#commands">Commands</a>
+      <a href="#vscode">VS Code</a>
+      <a href="#install">Install</a>
+    </div>
+    <a class="btn" href="https://github.com/<owner>/gitundo" target="_blank" rel="noopener">GitHub ↗</a>
+  </div>
+</nav>
+
+<header id="top">
+  <div class="wrap">
+    <div class="badge">🛟 The undo button git never had</div>
+    <h1>Never lose work<br>to <span class="grad">git</span> again.</h1>
+    <p class="tag">gitundo snapshots your <b>entire working tree</b> — staged, unstaged and
+      untracked — so <code>reset --hard</code>, <code>clean -fdx</code>, a bad rebase or an
+      accidental delete can never cost you hours of work. Zero dependencies. Any repo.</p>
+    <div class="cta">
+      <a class="btn pri" href="#install">▸ Install</a>
+      <a class="btn sec" href="#commands">Read the docs</a>
+    </div>
+    <div class="pip">
+      <code id="pipcode">pip install gitundo</code>
+      <button class="copy" onclick="copyPip()">copy</button>
+    </div>
+
+    <div class="term" aria-label="gitundo terminal demo">
+      <div class="termbar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="name">gitundo — you break it, it restores it</span></div>
+      <div class="termbody" id="term"></div>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <h2>What you get</h2>
+    <p class="sec-sub">A safety net that lives where git already lives — ordinary commits on a hidden ref, protected by git's own integrity model.</p>
+    <div class="grid">
+      <div class="card"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></div>
+        <h3>Snapshot anything</h3><p>Staged <b>and</b> unstaged <b>and</b> untracked files, deletions, symlinks, binaries. Ignored files &amp; the stash are never captured.</p></div>
+      <div class="card"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6A7 7 0 1 1 5 15.5"/><path d="M3 6v6h6"/></svg></div>
+        <h3>Undo the un-undoable</h3><p>Recover work destroyed by <code class="dng">reset --hard</code>, <code class="dng">clean -fdx</code>, <code class="dng">checkout -f</code> — even files that were never committed.</p></div>
+      <div class="card"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-3.6 8-10V5l-8-3-8 3v7c0 6.4 8 10 8 10z"/><path d="M9 11.5l2 2 4-4"/></svg></div>
+        <h3>Auto-guard</h3><p>Snapshots automatically before destructive commands (<code>reset --hard</code>, <code>clean -dfx</code>…). Installed with one command.</p></div>
+      <div class="card"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h3>Browse &amp; tag history</h3><p><code>list</code>, <code>diff</code>, and <code>tag demo-ready</code> — every intermediate state is findable and restorable by number, tag or id.</p></div>
+      <div class="card"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round"><path d="M12 3l7 3v5c0 5-3.2 8.4-7 10-3.8-1.6-7-5-7-10V6z"/></svg></div>
+        <h3>Zero-invasion</h3><p>Only a hidden ref is ever written. The index, working tree and history stay exactly as you left them. Restore never rewrites history.</p></div>
+      <div class="card"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round"><path d="M4 17V6h16v11"/><path d="M2 17h20l-2 4H4z"/><path d="M9 9h6M9 13h6"/></svg></div>
+        <h3>Editor integration</h3><p>Official VS&nbsp;Code extension: sidebar checkpoints, one-click snapshot, restore &amp; diff, and a live status bar.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="sec-sub">Checkpoints are real git commits hanging off <code>refs/gitundo/checkpoints</code> — so deduplication, integrity and shareability are all handled by git itself.</p>
+    <div class="steps">
+      <div class="step"><h3>Snap</h3><p><code>gitundo snap "before the refactor"</code> stores the complete working state as a lightweight checkpoint.</p></div>
+      <div class="step"><h3>Break things</h3><p>Experiment freely — or let the auto-guard snapshot for you before <code>reset --hard</code>, <code>clean</code> and friends.</p></div>
+      <div class="step"><h3>Restore</h3><p><code>gitundo restore</code> (by number, tag or id) puts everything back. Local edits are kept aside as <code>*.gitundo-keep</code>, never clobbered.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="commands">
+  <div class="wrap">
+    <h2>Commands</h2>
+    <p class="sec-sub">Selectors everywhere: <code>latest</code>, a number (snapshots ago), a tag name, or an object-id prefix.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Command</th><th>What it does</th></tr>
+        <tr><td><code>gitundo snap [msg] [-t TAG]</code></td><td>Snapshot the current working state</td></tr>
+        <tr><td><code>gitundo list</code></td><td>Browse checkpoints, newest first</td></tr>
+        <tr><td><code>gitundo restore [SEL]</code></td><td>Restore the working tree to a checkpoint</td></tr>
+        <tr><td><code>gitundo diff [SEL]</code></td><td>See exactly what a snapshot saved</td></tr>
+        <tr><td><code>gitundo tag NAME [SEL]</code></td><td>Name a checkpoint — tagged ones survive pruning</td></tr>
+        <tr><td><code>gitundo prune -k 50</code></td><td>Keep the newest 50 + tagged; reclaim the rest</td></tr>
+        <tr><td><code>gitundo autowrap</code></td><td>Install the shell auto-guard (bash / zsh)</td></tr>
+        <tr><td><code>gitundo status</code></td><td>Guard state, recent checkpoints, storage used</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="vscode">
+  <div class="wrap">
+    <h2>Made for your editor too</h2>
+    <div class="vsc">
+      <div class="logo">
+        <svg width="54" height="54" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9.5 6.2 A7 7 0 1 1 5.6 17.2" stroke="#2dd4bf" stroke-width="1.8" stroke-linecap="round"/><path d="M3.2 6.6 L3.2 12.2 L8.4 9.4 Z" fill="#2dd4bf"/><path d="M13.5 13.6 L15.6 15.8 L20.4 9.4" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h3>The GitUndo extension for VS Code</h3>
+        <p>A 🛟 view in your Activity Bar listing every checkpoint, with one-click snapshot &amp; restore, unified diffs, tags and a live status counter — all without touching your commits.</p>
+        <span class="pill">Activity Bar view</span><span class="pill">Restore &amp; Diff</span><span class="pill">Status bar</span><span class="pill">Tags</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap" style="text-align:center; padding-bottom:30px">
+    <h2>Install in seconds</h2>
+    <p class="sec-sub" style="margin-left:auto; margin-right:auto">Python 3.9+ and any git. No other dependencies, no daemon, no config file required.</p>
+    <div class="pip" style="margin:0 auto 16px"><code id="pipcode2">pip install gitundo</code><button class="copy" onclick="copyPip()">copy</button></div>
+    <div class="pip" style="margin:0 auto"><code id="pipcode3">gitundo snap -m "hello world" &amp;&amp; gitundo list</code><button class="copy" onclick="copyDemo()">copy</button></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><span class="hl">gitundo</span> — the undo button git never had. MIT licensed · zero dependencies ·
+      <a href="https://github.com/<owner>/gitundo" target="_blank" rel="noopener">github.com/<owner>/gitundo</a></p>
+    <p style="margin-top:6px">Built for everyone who has said <i>“wait… where did my changes go?”</i> at least once.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // ---------------- typewriter terminal demo ----------------
+  var seq = [
+    { p: "$", t: "gitundo snap -m \"before the big refactor\"", c: "" },
+    { p: "", t: "checkpoint 9f3a1c2 — 3 unstaged, 1 untracked", c: "g" },
+    { p: "$", t: "git add -A && git commit -qm \"risky experiment\"", c: "" },
+    { p: "$", t: "git reset --hard HEAD~5        # whoops", c: "" },
+    { p: "gitundo", t: "snapshot before git reset --hard → 7b8c9d0", c: "w" },
+    { p: "$", t: "git clean -fdx", c: "" },
+    { p: "gitundo", t: "snapshot before git clean -dfx → 0e5d2b1", c: "w" },
+    { p: "", t: "", c: "" },
+    { p: "", t: "# hours later — \"that reset was a mistake\"", c: "d" },
+    { p: "$", t: "gitundo list", c: "" },
+    { p: "", t: "9f3a1c2   2d ago    before the big refactor", c: "d" },
+    { p: "", t: "7b8c9d0   2d ago    auto-guard: git reset --hard", c: "d" },
+    { p: "", t: "0e5d2b1   2d ago    auto-guard: git clean -fdx", c: "d" },
+    { p: "$", t: "gitundo restore 9f3a1c2", c: "" },
+    { p: "", t: "restored working tree to 9f3a1c2 — 5 file(s) written, 0 removed", c: "g" },
+    { p: "", t: "", c: "" },
+    { p: "", t: "Nothing was lost. Ever.  🛟", c: "d" }
+  ];
+  var term = document.getElementById("term");
+  if (!term) return;
+
+  var speed = 16, pause = 420, done = false;
+  var cursor = document.createElement("span");
+  cursor.className = "cur";
+
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  async function typeLine(item) {
+    var div = document.createElement("div");
+    if (item.p) {
+      var pr = document.createElement("span");
+      pr.className = "c";
+      pr.textContent = item.p + " ";
+      div.appendChild(pr);
+    }
+    var body = document.createElement("span");
+    if (item.c) body.className = item.c;
+    div.appendChild(body);
+    term.appendChild(div);
+    term.appendChild(cursor);
+    // trim old lines to keep the card tidy
+    while (term.childNodes.length > 42) term.removeChild(term.firstChild);
+
+    for (var i = 0; i < item.t.length; i++) {
+      term.removeChild(cursor);
+      body.textContent = item.t.slice(0, i + 1);
+      term.appendChild(cursor);
+      await sleep(speed);
+    }
+    await sleep(pause);
+  }
+
+  (async function run() {
+    for (var i = 0; i < seq.length && !done; i++) {
+      await typeLine(seq[i]);
+    }
+    cursor.remove();
+  })();
+})();
+
+// ---------------- copy buttons ----------------
+function copyPip() {
+  copyText("pip install gitundo", "pipcode", "pipcode2");
+}
+function copyDemo() {
+  copyText('gitundo snap -m "hello world" && gitundo list', "pipcode3");
+}
+function copyText(text) {
+  var ids = Array.prototype.slice.call(arguments, 1);
+  var flash = function (ok) {
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var old = el.textContent;
+      el.textContent = ok ? "copied ✓" : text;
+      setTimeout(function () { if (el.textContent === (ok ? "copied ✓" : text)) el.textContent = old; }, 1400);
+    });
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () { flash(true); },
+      function () { fallbackCopy(text); flash(false); });
+  } else {
+    fallbackCopy(text);
+    flash(false);
+  }
+}
+function fallbackCopy(text) {
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+}
+</script>
+</body>
+</html>

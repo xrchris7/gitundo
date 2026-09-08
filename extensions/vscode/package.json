@@ -1,0 +1,199 @@
+{
+  "name": "gitundo",
+  "displayName": "gitundo — the undo button git never had",
+  "description": "Automatic safety-net checkpoints for your git working tree. Snapshot anytime, browse history, and restore files you thought were gone — right from the editor. Companion to the gitundo CLI.",
+  "version": "0.1.0",
+  "publisher": "gitundo",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "git",
+    "undo",
+    "checkpoint",
+    "snapshot",
+    "restore",
+    "recover",
+    "local-history"
+  ],
+  "icon": "resources/gitundo-icon.png",
+  "galleryBanner": {
+    "color": "#0b1220",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:gitundo.checkpoints",
+    "onCommand:gitundo.snap",
+    "onCommand:gitundo.restore",
+    "onCommand:gitundo.diff",
+    "onCommand:gitundo.tag",
+    "onCommand:gitundo.untag",
+    "onCommand:gitundo.prune",
+    "onCommand:gitundo.status",
+    "onCommand:gitundo.refresh",
+    "onCommand:gitundo.openInTerminal"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gitundo",
+          "title": "gitundo",
+          "icon": "resources/gitundo-activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "gitundo": [
+        {
+          "id": "gitundo.checkpoints",
+          "name": "Checkpoints",
+          "when": "gitundoAvailable"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "gitundo.snap",
+        "title": "GitUndo: Snapshot working state",
+        "icon": "$(save)"
+      },
+      {
+        "command": "gitundo.restore",
+        "title": "GitUndo: Restore checkpoint…",
+        "icon": "$(history)"
+      },
+      {
+        "command": "gitundo.diff",
+        "title": "GitUndo: Diff checkpoint vs worktree"
+      },
+      {
+        "command": "gitundo.tag",
+        "title": "GitUndo: Tag checkpoint…"
+      },
+      {
+        "command": "gitundo.untag",
+        "title": "GitUndo: Remove tag…"
+      },
+      {
+        "command": "gitundo.prune",
+        "title": "GitUndo: Prune old checkpoints…"
+      },
+      {
+        "command": "gitundo.status",
+        "title": "GitUndo: Status",
+        "icon": "$(info)"
+      },
+      {
+        "command": "gitundo.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gitundo.openInTerminal",
+        "title": "GitUndo: Open in terminal"
+      },
+      {
+        "command": "gitundo.copyId",
+        "title": "GitUndo: Copy checkpoint id",
+        "icon": "$(copy)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "gitundo.snap",
+          "when": "view == gitundo.checkpoints",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitundo.restore",
+          "when": "view == gitundo.checkpoints",
+          "group": "navigation@2"
+        },
+        {
+          "command": "gitundo.refresh",
+          "when": "view == gitundo.checkpoints",
+          "group": "navigation@3"
+        },
+        {
+          "command": "gitundo.prune",
+          "when": "view == gitundo.checkpoints",
+          "group": "1_maintenance"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "gitundo.restore",
+          "when": "view == gitundo.checkpoints && (viewItem == checkpoint || viewItem == tagged)",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitundo.diff",
+          "when": "view == gitundo.checkpoints && (viewItem == checkpoint || viewItem == tagged)",
+          "group": "1_diff@1"
+        },
+        {
+          "command": "gitundo.tag",
+          "when": "view == gitundo.checkpoints && (viewItem == checkpoint || viewItem == tagged)",
+          "group": "2_edit@1"
+        },
+        {
+          "command": "gitundo.untag",
+          "when": "view == gitundo.checkpoints && viewItem == tagged",
+          "group": "2_edit@2"
+        },
+        {
+          "command": "gitundo.copyId",
+          "when": "view == gitundo.checkpoints && (viewItem == checkpoint || viewItem == tagged)",
+          "group": "3_copy@1"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "gitundo.snap",
+          "when": "gitundoAvailable && scmProvider == git",
+          "group": "navigation@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "gitundo",
+      "properties": {
+        "gitundo.cliPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the `gitundo` executable. Leave empty to search PATH (falls back to `python3 -m gitundo`)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "lint": "eslint src --ext .ts",
+    "vscode:prepublish": "npm run clean && npm run compile",
+    "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true})\"",
+    "build": "npm run clean && npm run compile && vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.24.0",
+    "typescript": "^5.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/<owner>/gitundo.git"
+  },
+  "homepage": "https://github.com/<owner>/gitundo",
+  "bugs": "https://github.com/<owner>/gitundo/issues"
+}
