@@ -16,7 +16,7 @@ pip install gitundo
 [![PyPI version](https://img.shields.io/pypi/v/gitundo?color=2dd4bf&label=PyPI)](https://pypi.org/project/gitundo/)
 [![Python versions](https://img.shields.io/pypi/pyversions/gitundo?color=2dd4bf)](https://pypi.org/project/gitundo/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2dd4bf.svg)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/<owner>/gitundo/ci.yml?branch=main&label=CI)](https://github.com/<owner>/gitundo/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/xrchris7/gitundo/ci.yml?branch=main&label=CI)](https://github.com/xrchris7/gitundo/actions)
 [![VS Code extension](https://img.shields.io/visual-studio-marketplace/v/gitundo.gitundo?color=5b8cff&label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=gitundo.gitundo)
 
 [Features](#features) · [Quick start](#quick-start) · [Commands](#commands) ·
@@ -93,7 +93,7 @@ snapshot with one click, browse checkpoints, diff what each one saved, and
 restore from the right-click menu — all without touching your commits.
 
 ```
-git clone https://github.com/<owner>/gitundo
+git clone https://github.com/xrchris7/gitundo
 cd gitundo/extensions/vscode
 npm install && npm run package        # -> gitundo-<version>.vsix
 code --install-extension gitundo-0.1.0.vsix

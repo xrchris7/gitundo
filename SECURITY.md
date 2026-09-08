@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Please **do not** open a public issue. Email the maintainers or open a
-[private vulnerability report](https://github.com/<owner>/gitundo/security/advisories/new)
+[private vulnerability report](https://github.com/xrchris7/gitundo/security/advisories/new)
 on GitHub.
 
 We aim to acknowledge reports within 3 business days and to ship fixes for

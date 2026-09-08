@@ -2,7 +2,7 @@
 
 **The undo button git never had — now with a face.**
 
-[gitundo](https://github.com/<owner>/gitundo) snapshots your complete working
+[gitundo](https://github.com/xrchris7/gitundo) snapshots your complete working
 state (staged **and** unstaged **and** untracked files) as lightweight git
 checkpoints. This extension puts that safety net right in your editor: take a
 snapshot, browse your history, and restore files you thought were gone —
@@ -12,7 +12,7 @@ without ever touching your commits or branches.
 > (or `pipx install gitundo`). If it's not on your `PATH`, set the absolute
 > path in Settings → `gitundo.cliPath`.
 
-![gitundo in the activity bar](https://raw.githubusercontent.com/<owner>/gitundo/main/extensions/vscode/resources/gitundo-icon.png)
+![gitundo in the activity bar](https://raw.githubusercontent.com/xrchris7/gitundo/main/extensions/vscode/resources/gitundo-icon.png)
 
 ## Features
 

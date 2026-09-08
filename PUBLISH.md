@@ -15,7 +15,7 @@ then CI can auto-publish every release forever after.
 
 ## Step 0 — fill in your identity (30 seconds)
 
-Two commands replace every `<owner>` placeholder (README links, URLs, badges,
+Two commands replace every `xrchris7` placeholder (README links, URLs, badges,
 the website, the extension manifest, CI):
 
 ```bash
@@ -46,14 +46,14 @@ git, cli, developer-tools, checkpoint, snapshot, undo, git-tools, version-contro
 
 Leave **Public**, **don't** tick "Add a README" (you have one).
 
-### 1b. Push (replace `<owner>`)
+### 1b. Push (replace `xrchris7`)
 
 ```bash
 cd /home/user/gitundo
 git init -b main
 git add -A && git commit -m "gitundo 0.1.0 — CLI, guard, docs & VS Code extension"
 git branch -M main
-git remote add origin https://github.com/<owner>/gitundo.git
+git remote add origin https://github.com/xrchris7/gitundo.git
 git push -u origin main
 ```
 
@@ -61,7 +61,7 @@ git push -u origin main
 
 1. Repo → **Settings → General → Social preview** → upload
    [`assets/social-preview.png`](assets/social-preview.png) (shows on link shares).
-2. Repo → **About → ⚙** → add **Website** `https://<owner>.github.io/gitundo`
+2. Repo → **About → ⚙** → add **Website** `https://xrchris7.github.io/gitundo`
    after Step 2.
 3. Watch **Actions** run CI (3 jobs: 15-matrix Python tests, lint, VS Code build).
 
@@ -74,9 +74,9 @@ commands, install). It's fully self-contained and already in the repo.
 
 1. Repo → **Settings → Pages**.
 2. **Source:** *Deploy from a branch* → branch `main`, folder `/docs` → Save.
-3. Wait ~60 s → your site is at `https://<owner>.github.io/gitundo`.
+3. Wait ~60 s → your site is at `https://xrchris7.github.io/gitundo`.
 
-> The `<owner>` in the page's "GitHub" button was already replaced in Step 0.
+> The `xrchris7` in the page's "GitHub" button was already replaced in Step 0.
 
 ---
 

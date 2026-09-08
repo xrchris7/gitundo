@@ -192,8 +192,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/<owner>/gitundo.git"
+    "url": "https://github.com/xrchris7/gitundo.git"
   },
-  "homepage": "https://github.com/<owner>/gitundo",
-  "bugs": "https://github.com/<owner>/gitundo/issues"
+  "homepage": "https://github.com/xrchris7/gitundo",
+  "bugs": "https://github.com/xrchris7/gitundo/issues"
 }
